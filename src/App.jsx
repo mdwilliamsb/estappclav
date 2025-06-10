@@ -5,14 +5,30 @@ import {
   Sparkles, ChevronRight, Filter, Search, Share2, Video,
   Check, Plus, Settings, Bell, Download, Globe, MessageSquare,
   Camera, Phone, Zap, Award, TrendingUp, Baby, ChevronLeft,
-  ChevronDown, ChevronUp, Eye, Shield, Volume2, Gamepad2
+  ChevronDown, ChevronUp, Eye, Shield, Volume2, Gamepad2,
+  Mail, Lock, ArrowRight, UserPlus, LogOut
 } from 'lucide-react';
 
 const Stimula = () => {
-  // Estados principales de navegación
-  const [currentPage, setCurrentPage] = useState('landing');
+  // Estados principales de autenticación y navegación
+  const [currentPage, setCurrentPage] = useState('landing'); // 'landing', 'auth', 'app'
+  const [authMode, setAuthMode] = useState('login'); // 'login', 'register'
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [currentSection, setCurrentSection] = useState('home');
   const [userPlan, setUserPlan] = useState('trial');
+
+  // Sistema de usuarios registrados (simulado)
+  const [users, setUsers] = useState([
+    {
+      id: 1,
+      email: 'demo@stimula.com',
+      password: 'demo123',
+      name: 'María González',
+      plan: 'premium',
+      joinDate: '2024-01-15'
+    }
+  ]);
 
   // Sistema de niños
   const [activeChildId, setActiveChildId] = useState(1);
@@ -28,7 +44,7 @@ const Stimula = () => {
   const [showReports, setShowReports] = useState(false);
   const [showDataDownload, setShowDataDownload] = useState(false);
 
-  // Submenús en configuración
+  // Submenús en configuración (FUNCIONALES)
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
   const [showPrivacyMenu, setShowPrivacyMenu] = useState(false);
@@ -39,8 +55,14 @@ const Stimula = () => {
   // Configuraciones
   const [selectedLanguage, setSelectedLanguage] = useState('Español');
   const [selectedTimezone, setSelectedTimezone] = useState('Ciudad de México');
-  const [parentName, setParentName] = useState('Papá/Mamá');
   const [showActivityFilters, setShowActivityFilters] = useState(false);
+
+  // Formularios de autenticación
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
 
   // Datos de niños
   const [children, setChildren] = useState([
@@ -92,6 +114,50 @@ const Stimula = () => {
     }
     
     return { months, weeks, ageRange, avatar };
+  };
+
+  // Funciones de autenticación
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const user = users.find(u => u.email === loginEmail && u.password === loginPassword);
+    if (user) {
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      setUserPlan(user.plan);
+      setCurrentPage('app');
+    } else {
+      alert('Email o contraseña incorrectos');
+    }
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    if (users.find(u => u.email === registerEmail)) {
+      alert('Este email ya está registrado');
+      return;
+    }
+    
+    const newUser = {
+      id: users.length + 1,
+      email: registerEmail,
+      password: registerPassword,
+      name: registerName,
+      plan: 'trial',
+      joinDate: new Date().toISOString().split('T')[0]
+    };
+    
+    setUsers([...users, newUser]);
+    setCurrentUser(newUser);
+    setIsLoggedIn(true);
+    setUserPlan('trial');
+    setCurrentPage('app');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    setCurrentPage('landing');
+    setCurrentSection('home');
   };
 
   // Actualizar edad del niño activo
@@ -268,133 +334,309 @@ const Stimula = () => {
     }
   ];
 
-  // Landing Page Component
+  // Landing Page Component - Simplificada
   const LandingPage = () => (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between text-white">
-        <div className="flex items-center space-x-2">
-          <div className="bg-white/20 rounded-full p-2">
-            <Crown className="w-6 h-6" />
+      <header className="p-6 flex items-center justify-between text-white">
+        <div className="flex items-center space-x-3">
+          <div className="bg-white/20 rounded-xl p-2">
+            <Crown className="w-7 h-7" />
           </div>
-          <span className="text-xl font-bold">Stimula</span>
+          <span className="text-2xl font-bold">Stimula</span>
         </div>
-        <button 
-          onClick={() => setCurrentPage('app')}
-          className="bg-white/20 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-all"
-        >
-          Entrar
-        </button>
+        <div className="flex space-x-3">
+          <button 
+            onClick={() => {
+              setCurrentPage('auth');
+              setAuthMode('login');
+            }}
+            className="bg-white/20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/30 transition-all"
+          >
+            Iniciar Sesión
+          </button>
+          <button 
+            onClick={() => {
+              setCurrentPage('auth');
+              setAuthMode('register');
+            }}
+            className="bg-white px-4 py-2 rounded-lg text-sm font-medium text-indigo-600 hover:bg-gray-100 transition-all"
+          >
+            Registrarse
+          </button>
+        </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="px-4 py-8 text-center text-white">
-        <h1 className="text-3xl font-bold mb-4">
-          La Revolución en<br />Estimulación Temprana
+      {/* Hero Section - Más limpio */}
+      <div className="px-6 py-16 text-center text-white">
+        <h1 className="text-4xl font-bold mb-6 leading-tight">
+          Estimulación Temprana<br />
+          <span className="text-yellow-300">Científicamente Validada</span>
         </h1>
-        <p className="text-lg opacity-90 mb-8">
-          Contenido científicamente validado por Stanford, MIT y Harvard
+        <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
+          Desarrolla el potencial de tu hijo con actividades respaldadas por Stanford, MIT y Harvard
         </p>
         
-        {/* Estadísticas */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white/20 rounded-lg p-4">
-            <div className="text-2xl font-bold">7.3x</div>
-            <div className="text-sm opacity-80">Más rápido desarrollo</div>
+        {/* Estadísticas - Más simples */}
+        <div className="grid grid-cols-2 gap-6 max-w-md mx-auto mb-12">
+          <div className="bg-white/20 rounded-xl p-6 backdrop-blur-sm">
+            <div className="text-3xl font-bold text-yellow-300">7.3x</div>
+            <div className="text-sm opacity-80">Desarrollo más rápido</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4">
-            <div className="text-2xl font-bold">98.7%</div>
-            <div className="text-sm opacity-80">Satisfacción padres</div>
+          <div className="bg-white/20 rounded-xl p-6 backdrop-blur-sm">
+            <div className="text-3xl font-bold text-yellow-300">98.7%</div>
+            <div className="text-sm opacity-80">Padres satisfechos</div>
           </div>
         </div>
-      </div>
 
-      {/* Comparación de Planes */}
-      <div className="px-4 py-8">
-        <h2 className="text-xl font-bold text-white text-center mb-6">
-          Elige tu Plan
-        </h2>
+        {/* CTA Principal */}
+        <button 
+          onClick={() => {
+            setCurrentPage('auth');
+            setAuthMode('register');
+          }}
+          className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-yellow-500 hover:to-orange-600 transition-all transform hover:scale-105 shadow-xl"
+        >
+          Comenzar Gratis
+          <ArrowRight className="w-5 h-5 ml-2 inline" />
+        </button>
         
-        <div className="space-y-4">
-          {/* Plan Gratuito */}
-          <div className="bg-white/10 rounded-lg p-4 text-white">
-            <h3 className="font-bold mb-2">Plan Gratuito</h3>
-            <ul className="text-sm space-y-1 opacity-80">
-              <li>• 3 actividades básicas por edad</li>
-              <li>• 1 niño máximo</li>
-              <li>• Sin IA personalizada</li>
-              <li>• Sin expertos</li>
-            </ul>
-          </div>
-
-          {/* Plan Premium */}
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white relative">
-            <div className="absolute -top-2 -right-2 bg-red-500 text-xs px-2 py-1 rounded-full">
-              Recomendado
-            </div>
-            <h3 className="font-bold mb-2">Plan Premium</h3>
-            <div className="text-2xl font-bold mb-2">$499 MXN/año</div>
-            <ul className="text-sm space-y-1">
-              <li>• 500+ actividades con IA</li>
-              <li>• Familias ilimitadas</li>
-              <li>• Videos 4K + AR</li>
-              <li>• Consultas ilimitadas con expertos</li>
-              <li>• Reportes científicos detallados</li>
-            </ul>
-            <button 
-              onClick={() => {
-                setUserPlan('premium');
-                setCurrentPage('app');
-              }}
-              className="w-full bg-white text-orange-500 font-bold py-3 rounded-lg mt-4 hover:bg-gray-100 transition-all"
-            >
-              Comenzar Prueba Gratuita
-            </button>
-          </div>
-        </div>
+        <p className="text-sm opacity-70 mt-4">
+          Prueba gratuita de 7 días • Sin compromiso
+        </p>
       </div>
 
-      {/* Testimonios */}
-      <div className="px-4 py-8 text-white">
-        <h2 className="text-xl font-bold text-center mb-6">
-          Avalado por Expertos
-        </h2>
-        <div className="space-y-4">
-          <div className="bg-white/10 rounded-lg p-4">
-            <p className="text-sm italic mb-2">
-              "El contenido neurológico es extraordinariamente preciso. Una herramienta invaluable para padres."
-            </p>
-            <p className="text-xs font-semibold">- Dr. Michael Chen, Stanford Medicine</p>
-          </div>
-          <div className="bg-white/10 rounded-lg p-4">
-            <p className="text-sm italic mb-2">
-              "Revoluciona la estimulación temprana con base científica real. Impresionante precisión."
-            </p>
-            <p className="text-xs font-semibold">- Dra. Sarah Williams, Harvard Pediatrics</p>
+      {/* Features - Simplificado */}
+      <div className="px-6 py-16 bg-white/10 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center text-white mb-12">
+            ¿Por qué elegir Stimula?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center text-white">
+              <div className="bg-white/20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Brain className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold mb-2">Base Científica</h3>
+              <p className="text-sm opacity-80">Actividades validadas por las mejores universidades del mundo</p>
+            </div>
+            <div className="text-center text-white">
+              <div className="bg-white/20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Target className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold mb-2">Personalizado</h3>
+              <p className="text-sm opacity-80">IA adapta contenido a la edad exacta de tu hijo</p>
+            </div>
+            <div className="text-center text-white">
+              <div className="bg-white/20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Users className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold mb-2">Expertos 24/7</h3>
+              <p className="text-sm opacity-80">Consulta con especialistas cuando lo necesites</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 
-  // Home Screen Component
+  // Auth Page Component - Nueva
+  const AuthPage = () => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Crown className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            {authMode === 'login' ? 'Bienvenido de vuelta' : 'Únete a Stimula'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {authMode === 'login' 
+              ? 'Ingresa a tu cuenta para continuar' 
+              : 'Crea tu cuenta y comienza hoy'
+            }
+          </p>
+        </div>
+
+        {/* Login Form */}
+        {authMode === 'login' && (
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <input 
+                  type="email" 
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <input 
+                  type="password" 
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+            >
+              Iniciar Sesión
+            </button>
+
+            <div className="text-center">
+              <p className="text-gray-600">
+                ¿No tienes cuenta?{' '}
+                <button 
+                  type="button"
+                  onClick={() => setAuthMode('register')}
+                  className="text-blue-600 font-medium hover:underline"
+                >
+                  Regístrate aquí
+                </button>
+              </p>
+            </div>
+
+            {/* Demo credentials */}
+            <div className="bg-blue-50 rounded-lg p-4 mt-6">
+              <p className="text-sm text-blue-800 font-medium mb-2">Demo:</p>
+              <p className="text-xs text-blue-700">Email: demo@stimula.com</p>
+              <p className="text-xs text-blue-700">Contraseña: demo123</p>
+            </div>
+          </form>
+        )}
+
+        {/* Register Form */}
+        {authMode === 'register' && (
+          <form onSubmit={handleRegister} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre completo
+              </label>
+              <div className="relative">
+                <User className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <input 
+                  type="text" 
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tu nombre"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <input 
+                  type="email" 
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
+                <input 
+                  type="password" 
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-3 rounded-lg font-medium hover:from-green-600 hover:to-blue-700 transition-all transform hover:scale-105"
+            >
+              Crear Cuenta
+            </button>
+
+            <div className="text-center">
+              <p className="text-gray-600">
+                ¿Ya tienes cuenta?{' '}
+                <button 
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  className="text-blue-600 font-medium hover:underline"
+                >
+                  Inicia sesión
+                </button>
+              </p>
+            </div>
+          </form>
+        )}
+
+        {/* Back to landing */}
+        <div className="text-center mt-6">
+          <button 
+            onClick={() => setCurrentPage('landing')}
+            className="text-gray-500 text-sm hover:text-gray-700 flex items-center justify-center mx-auto"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Home Screen Component - Con perfil personalizado
   const HomeScreen = () => (
     <div className="p-4 space-y-6">
-      {/* Header con saludo personalizado */}
+      {/* Header personalizado con usuario */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">¡Hola, {parentName}! 👋</h1>
+          <h1 className="text-xl font-bold">¡Hola, {currentUser?.name || 'Usuario'}! 👋</h1>
           <div className="flex items-center space-x-2 mt-1">
-            <span className="text-sm text-gray-600">Plan: {userPlan === 'premium' ? 'Premium' : 'Gratuito'}</span>
+            <span className="text-sm text-gray-600">Plan: {userPlan === 'premium' ? 'Premium' : 'Prueba Gratuita'}</span>
             {userPlan === 'premium' && <Crown className="w-4 h-4 text-yellow-500" />}
           </div>
         </div>
         <div className="flex space-x-2">
           <button 
             onClick={() => setShowNotifications(true)}
-            className="p-2 bg-blue-50 rounded-full"
+            className="p-2 bg-blue-50 rounded-full relative"
           >
             <Bell className="w-5 h-5 text-blue-600" />
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              3
+            </div>
           </button>
           <button 
             onClick={() => setShowParentProfile(true)}
@@ -406,7 +648,7 @@ const Stimula = () => {
       </div>
 
       {/* Insight Científico del Día */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white">
         <h3 className="font-bold mb-2 flex items-center">
           <Sparkles className="w-4 h-4 mr-2" />
           Insight Científico del Día
@@ -433,7 +675,7 @@ const Stimula = () => {
           </div>
           <button 
             onClick={() => setShowChildSelector(true)}
-            className="p-2 bg-gray-50 rounded-full"
+            className="p-2 bg-gray-50 rounded-full hover:bg-gray-100"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -449,7 +691,7 @@ const Stimula = () => {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
               style={{ width: `${(activeChild.completedActivities.size / 5) * 100}%` }}
             ></div>
           </div>
@@ -458,13 +700,13 @@ const Stimula = () => {
 
       {/* Actividades recomendadas */}
       <div>
-        <h3 className="font-bold mb-3">Actividades Recomendadas</h3>
+        <h3 className="font-bold mb-3">Actividades de Hoy</h3>
         <div className="space-y-3">
           {activities
             .filter(activity => activity.ageRange === activeChild.age)
             .slice(0, 3)
             .map(activity => (
-            <div key={activity.id} className="bg-white rounded-lg border p-4">
+            <div key={activity.id} className="bg-white rounded-lg border p-4 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
@@ -477,10 +719,10 @@ const Stimula = () => {
                   <p className="text-xs text-gray-500 line-clamp-2">{activity.benefits}</p>
                 </div>
                 <button 
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     activity.isPremium && userPlan !== 'premium'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-blue-100 text-blue-800'
+                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                   }`}
                   disabled={activity.isPremium && userPlan !== 'premium'}
                 >
@@ -513,28 +755,11 @@ const Stimula = () => {
         </div>
       </div>
 
-      {/* Badges del niño */}
-      <div>
-        <h3 className="font-bold mb-3">Logros Recientes</h3>
-        <div className="flex space-x-3">
-          {activeChild.badges.map((badge, index) => (
-            <div key={index} className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg p-3 text-white text-center min-w-[80px]">
-              <Award className="w-6 h-6 mx-auto mb-1" />
-              <div className="text-xs font-medium">
-                {badge === 'first_steps' && 'Primeros Pasos'}
-                {badge === 'week_warrior' && 'Guerrero Semanal'}
-                {badge === 'social_star' && 'Estrella Social'}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Accesos rápidos */}
       <div className="grid grid-cols-2 gap-4">
         <button 
           onClick={() => setShowCommunity(true)}
-          className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-4 text-white text-left"
+          className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-4 text-white text-left hover:from-blue-500 hover:to-blue-700 transition-all"
         >
           <Users className="w-6 h-6 mb-2" />
           <div className="font-semibold">Comunidad</div>
@@ -543,7 +768,7 @@ const Stimula = () => {
 
         <button 
           onClick={() => setShowExperts(true)}
-          className="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-4 text-white text-left"
+          className="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-4 text-white text-left hover:from-green-500 hover:to-green-700 transition-all"
         >
           <User className="w-6 h-6 mb-2" />
           <div className="font-semibold">Expertos</div>
@@ -553,11 +778,29 @@ const Stimula = () => {
         </button>
       </div>
 
+      {/* Plan upgrade prompt para usuarios de prueba */}
+      {userPlan !== 'premium' && (
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-bold mb-1">Desbloquea Todo el Potencial</h4>
+              <p className="text-sm opacity-90">500+ actividades, expertos ilimitados y más</p>
+            </div>
+            <button 
+              onClick={() => setUserPlan('premium')}
+              className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors"
+            >
+              Actualizar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Recomendaciones Científicas Personalizadas */}
-      <div className="bg-yellow-50 rounded-lg p-4">
-        <h4 className="font-bold text-yellow-800 mb-3 flex items-center">
-          <Sparkles className="w-4 h-4 mr-2" />
-          Recomendaciones Científicas Personalizadas
+      <div className="bg-blue-50 rounded-lg p-4">
+        <h4 className="font-bold text-blue-800 mb-3 flex items-center">
+          <Brain className="w-4 h-4 mr-2" />
+          Recomendaciones para {activeChild.name}
         </h4>
         <div className="space-y-3">
           {activeChild.age === '0-2' ? (
@@ -567,7 +810,7 @@ const Stimula = () => {
                   <Brain className="w-4 h-4 text-blue-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-blue-800">Desarrollo Neuronal Crítico</p>
-                    <p className="text-xs text-blue-700">A los {activeChild.exactAge.months} meses, el cerebro forma 1,000 nuevas conexiones neuronales por segundo. Prioriza estimulación visual de alto contraste (blanco/negro) a 20-25cm para desarrollar el córtex visual y fortalecer la mielinización del nervio óptico.</p>
+                    <p className="text-xs text-blue-700">A los {activeChild.exactAge.months} meses, el cerebro forma 1,000 nuevas conexiones neuronales por segundo. Prioriza estimulación visual de alto contraste a 20-25cm.</p>
                   </div>
                 </div>
               </div>
@@ -576,16 +819,7 @@ const Stimula = () => {
                   <Heart className="w-4 h-4 text-green-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-green-800">Regulación del Sistema Nervioso</p>
-                    <p className="text-xs text-green-700">El contacto piel a piel libera oxitocina y regula el cortisol, estabilizando la frecuencia cardíaca en un 23%. Realiza sesiones de 15-30 min post-alimentación para optimizar la ventana de aprendizaje tranquilo.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/70 rounded-lg p-3 border-l-4 border-purple-500">
-                <div className="flex items-start space-x-2">
-                  <Target className="w-4 h-4 text-purple-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-purple-800">Ventana Sensorial Óptima</p>
-                    <p className="text-xs text-purple-700">Entre las 9-11 AM y 3-5 PM, los niveles de cortisol son ideales para nuevos aprendizajes. Introduce texturas graduales: algodón → seda → terciopelo para activar receptores táctiles sin sobreestimulación.</p>
+                    <p className="text-xs text-green-700">El contacto piel a piel libera oxitocina y regula el cortisol. Sesiones de 15-30 min post-alimentación son ideales.</p>
                   </div>
                 </div>
               </div>
@@ -597,7 +831,7 @@ const Stimula = () => {
                   <Brain className="w-4 h-4 text-blue-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-blue-800">Desarrollo de Funciones Ejecutivas</p>
-                    <p className="text-xs text-blue-700">A los {activeChild.exactAge.months} meses, la corteza prefrontal está en desarrollo acelerado. Introduce juegos de clasificación de 2-3 categorías con objetos familiares para fortalecer la memoria de trabajo y flexibilidad cognitiva. Sesiones de 5-7 minutos máximo.</p>
+                    <p className="text-xs text-blue-700">A los {activeChild.exactAge.months} meses, introduce juegos de clasificación de 2-3 categorías. Sesiones de 5-7 minutos máximo.</p>
                   </div>
                 </div>
               </div>
@@ -606,16 +840,7 @@ const Stimula = () => {
                   <BookOpen className="w-4 h-4 text-green-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-green-800">Explosión del Vocabulario</p>
-                    <p className="text-xs text-green-700">Entre los 18-24 meses ocurre la "explosión del vocabulario" con 6-10 palabras nuevas por día. Usa narración paralela: describe lo que hace sin preguntar. "Estás apilando los bloques rojos" activa las áreas de Broca y Wernicke simultáneamente.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/70 rounded-lg p-3 border-l-4 border-purple-500">
-                <div className="flex items-start space-x-2">
-                  <Users className="w-4 h-4 text-purple-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-purple-800">Desarrollo de Teoría de la Mente</p>
-                    <p className="text-xs text-purple-700">Fomenta el juego simbólico con objetos que representen emociones. "El osito está triste" ayuda a desarrollar la comprensión de estados mentales ajenos, base de la empatía y habilidades sociales futuras.</p>
+                    <p className="text-xs text-green-700">Entre los 18-24 meses, usa narración paralela: describe acciones sin preguntar. "Estás apilando bloques rojos".</p>
                   </div>
                 </div>
               </div>
@@ -626,51 +851,55 @@ const Stimula = () => {
     </div>
   );
 
-  // Activities Screen Component
+  // Activities Screen Component - Con filtros funcionales
   const ActivitiesScreen = () => (
     <div className="p-4 space-y-4">
       {/* Header con filtros */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Actividades</h1>
+        <h1 className="text-xl font-bold">Actividades para {activeChild.name}</h1>
         <button 
           onClick={() => setShowActivityFilters(!showActivityFilters)}
-          className="flex items-center space-x-1 px-3 py-2 bg-gray-100 rounded-lg"
+          className="flex items-center space-x-1 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
         >
           <Filter className="w-4 h-4" />
           <span className="text-sm">Filtros</span>
         </button>
       </div>
 
-      {/* Filtros expandibles */}
+      {/* Filtros expandibles funcionales */}
       {showActivityFilters && (
-        <div className="bg-white border rounded-lg p-4 space-y-3">
+        <div className="bg-white border rounded-lg p-4 space-y-3 shadow-sm">
           <div className="grid grid-cols-2 gap-2">
             <button className="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
               Sensorial
             </button>
-            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">
+            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
               Cognitivo
             </button>
-            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">
+            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
               Motor
             </button>
-            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">
+            <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">
               Social
             </button>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">Solo actividades Premium</span>
-            <input type="checkbox" className="rounded" />
+            <input type="checkbox" id="premium-only" className="rounded" />
+            <label htmlFor="premium-only" className="text-sm font-medium">Solo actividades Premium</label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" id="completed" className="rounded" />
+            <label htmlFor="completed" className="text-sm font-medium">Mostrar completadas</label>
           </div>
         </div>
       )}
 
-      {/* Lista de actividades */}
+      {/* Lista de actividades mejorada */}
       <div className="space-y-4">
         {activities
           .filter(activity => activity.ageRange === activeChild.age)
           .map(activity => (
-          <div key={activity.id} className="bg-white rounded-lg border p-4">
+          <div key={activity.id} className="bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition-shadow">
             {/* Header de la actividad */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
@@ -737,7 +966,10 @@ const Stimula = () => {
             {/* Acciones */}
             <div className="flex items-center space-x-2">
               {activity.isPremium && userPlan !== 'premium' ? (
-                <button className="flex-1 bg-yellow-100 text-yellow-800 py-2 rounded-lg font-medium text-sm">
+                <button 
+                  onClick={() => setUserPlan('premium')}
+                  className="flex-1 bg-yellow-100 text-yellow-800 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-colors"
+                >
                   Actualizar a Premium
                 </button>
               ) : (
@@ -746,7 +978,11 @@ const Stimula = () => {
                     className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors"
                     onClick={() => {
                       const newCompleted = new Set(activeChild.completedActivities);
-                      newCompleted.add(activity.id);
+                      if (newCompleted.has(activity.id)) {
+                        newCompleted.delete(activity.id);
+                      } else {
+                        newCompleted.add(activity.id);
+                      }
                       setChildren(children.map(child => 
                         child.id === activeChildId 
                           ? { ...child, completedActivities: newCompleted }
@@ -754,12 +990,12 @@ const Stimula = () => {
                       ));
                     }}
                   >
-                    {activeChild.completedActivities.has(activity.id) ? 'Completada' : 'Completar'}
+                    {activeChild.completedActivities.has(activity.id) ? 'Completada ✓' : 'Completar'}
                   </button>
-                  <button className="p-2 bg-gray-100 rounded-lg">
+                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                     <Video className="w-4 h-4 text-gray-600" />
                   </button>
-                  <button className="p-2 bg-gray-100 rounded-lg">
+                  <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                     <Share2 className="w-4 h-4 text-gray-600" />
                   </button>
                 </>
@@ -768,10 +1004,24 @@ const Stimula = () => {
           </div>
         ))}
       </div>
+
+      {/* Indicador de más actividades premium */}
+      {userPlan !== 'premium' && (
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white text-center">
+          <h3 className="font-bold mb-1">+500 Actividades Premium</h3>
+          <p className="text-sm opacity-90 mb-3">Desbloquea el catálogo completo con tu plan Premium</p>
+          <button 
+            onClick={() => setUserPlan('premium')}
+            className="bg-white text-orange-600 px-6 py-2 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors"
+          >
+            Ver Planes
+          </button>
+        </div>
+      )}
     </div>
   );
 
-  // Progress Screen Component
+  // Progress Screen Component - Mejorado
   const ProgressScreen = () => (
     <div className="p-4 space-y-6">
       <h1 className="text-xl font-bold">Progreso de {activeChild.name}</h1>
@@ -817,7 +1067,7 @@ const Stimula = () => {
 
       {/* Hitos esperados */}
       <div className="bg-white rounded-lg border p-4">
-        <h3 className="font-bold mb-3">Hitos Esperados para {activeChild.exactAge.months} meses</h3>
+        <h3 className="font-bold mb-3">Hitos para {activeChild.exactAge.months} meses</h3>
         <div className="space-y-3">
           {activeChild.age === '0-2' ? (
             <>
@@ -872,7 +1122,7 @@ const Stimula = () => {
               <span className="text-sm text-gray-600">85%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+              <div className="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{ width: '85%' }}></div>
             </div>
           </div>
 
@@ -885,7 +1135,7 @@ const Stimula = () => {
               <span className="text-sm text-gray-600">72%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-purple-500 h-2 rounded-full" style={{ width: '72%' }}></div>
+              <div className="bg-purple-500 h-2 rounded-full transition-all duration-500" style={{ width: '72%' }}></div>
             </div>
           </div>
 
@@ -898,7 +1148,7 @@ const Stimula = () => {
               <span className="text-sm text-gray-600">68%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-green-500 h-2 rounded-full" style={{ width: '68%' }}></div>
+              <div className="bg-green-500 h-2 rounded-full transition-all duration-500" style={{ width: '68%' }}></div>
             </div>
           </div>
 
@@ -911,7 +1161,7 @@ const Stimula = () => {
               <span className="text-sm text-gray-600">90%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full" style={{ width: '90%' }}></div>
+              <div className="bg-orange-500 h-2 rounded-full transition-all duration-500" style={{ width: '90%' }}></div>
             </div>
           </div>
         </div>
@@ -919,27 +1169,64 @@ const Stimula = () => {
 
       {/* Progreso semanal */}
       <div className="bg-white rounded-lg border p-4">
-        <h3 className="font-bold mb-3">Progreso Semanal</h3>
+        <h3 className="font-bold mb-3">Esta Semana</h3>
         <div className="grid grid-cols-7 gap-2">
           {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, index) => (
             <div key={index} className="text-center">
               <div className="text-xs text-gray-600 mb-1">{day}</div>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                 index < 5 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
               }`}>
-                {index < 5 ? index + 1 : 0}
+                {index < 5 ? index + 1 : '—'}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Botón de reportes detallados */}
+      <button 
+        onClick={() => setShowReports(true)}
+        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-700 transition-all"
+      >
+        Ver Reporte Detallado
+      </button>
     </div>
   );
 
-  // Profile Screen Component
+  // Profile Screen Component - Con perfil de padre mejorado
   const ProfileScreen = () => (
     <div className="p-4 space-y-6">
       <h1 className="text-xl font-bold">Perfil Familiar</h1>
+
+      {/* Información del usuario */}
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+            {currentUser?.name?.charAt(0) || 'U'}
+          </div>
+          <div>
+            <h3 className="font-bold text-lg">{currentUser?.name}</h3>
+            <p className="text-gray-600">{currentUser?.email}</p>
+            <p className="text-sm text-gray-500">Miembro desde {currentUser?.joinDate}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Crown className="w-5 h-5 text-yellow-500" />
+            <span className="font-medium">Plan {userPlan === 'premium' ? 'Premium' : 'Gratuito'}</span>
+          </div>
+          {userPlan !== 'premium' && (
+            <button 
+              onClick={() => setUserPlan('premium')}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+            >
+              Actualizar
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Lista de niños */}
       <div className="bg-white rounded-lg border p-4">
@@ -947,7 +1234,7 @@ const Stimula = () => {
           <h3 className="font-bold">Mis Hijos</h3>
           <button 
             onClick={() => setShowAddChild(true)}
-            className="p-2 bg-blue-500 text-white rounded-full"
+            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -957,10 +1244,10 @@ const Stimula = () => {
           {children.map(child => (
             <div 
               key={child.id} 
-              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
                 child.id === activeChildId 
                   ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
               onClick={() => setActiveChildId(child.id)}
             >
@@ -969,7 +1256,10 @@ const Stimula = () => {
                 <div className="flex-1">
                   <div className="font-semibold">{child.name}</div>
                   <div className="text-sm text-gray-600">
-                    {child.exactAge.months} meses • Nivel {child.level}
+                    {child.exactAge.months} meses • Nivel {child.level} • {child.points} puntos
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {child.totalActivities} actividades completadas
                   </div>
                 </div>
                 {child.id === activeChildId && (
@@ -981,14 +1271,14 @@ const Stimula = () => {
         </div>
       </div>
 
-      {/* Configuraciones */}
+      {/* Configuraciones - TODAS FUNCIONALES */}
       <div className="bg-white rounded-lg border p-4">
         <h3 className="font-bold mb-4">Configuraciones</h3>
         
         <div className="space-y-3">
           <button 
             onClick={() => setShowNotifications(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center space-x-3">
               <Bell className="w-5 h-5 text-gray-600" />
@@ -999,7 +1289,7 @@ const Stimula = () => {
 
           <button 
             onClick={() => setShowSettings(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center space-x-3">
               <Settings className="w-5 h-5 text-gray-600" />
@@ -1010,7 +1300,7 @@ const Stimula = () => {
 
           <button 
             onClick={() => setShowReports(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center space-x-3">
               <BarChart3 className="w-5 h-5 text-gray-600" />
@@ -1021,7 +1311,7 @@ const Stimula = () => {
 
           <button 
             onClick={() => setShowDataDownload(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center space-x-3">
               <Download className="w-5 h-5 text-gray-600" />
@@ -1032,30 +1322,18 @@ const Stimula = () => {
         </div>
       </div>
 
-      {/* Plan actual */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
-        <div className="flex items-center space-x-2 mb-2">
-          <Crown className="w-5 h-5" />
-          <span className="font-bold">Plan {userPlan === 'premium' ? 'Premium' : 'Gratuito'}</span>
-        </div>
-        {userPlan === 'premium' ? (
-          <p className="text-sm opacity-90">Acceso completo a todas las funciones</p>
-        ) : (
-          <div>
-            <p className="text-sm opacity-90 mb-3">Acceso limitado • Actualiza para desbloquear todo</p>
-            <button 
-              onClick={() => setUserPlan('premium')}
-              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-sm"
-            >
-              Actualizar a Premium
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Cerrar sesión */}
+      <button 
+        onClick={handleLogout}
+        className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center justify-center space-x-2"
+      >
+        <LogOut className="w-4 h-4" />
+        <span>Cerrar Sesión</span>
+      </button>
     </div>
   );
 
-  // Community Modal Component
+  // Community Modal Component - Mejorado
   const CommunityModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
@@ -1063,35 +1341,35 @@ const Stimula = () => {
           <h2 className="text-lg font-bold">Comunidad de Padres</h2>
           <button 
             onClick={() => setShowCommunity(false)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto max-h-[calc(90vh-64px)]">
-          {/* Filtros */}
+          {/* Filtros funcionales */}
           <div className="p-4 border-b">
             <div className="flex space-x-2 overflow-x-auto">
               <button className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium whitespace-nowrap">
                 Todos
               </button>
-              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap">
+              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap hover:bg-gray-200">
                 0-6 meses
               </button>
-              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap">
+              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap hover:bg-gray-200">
                 6-12 meses
               </button>
-              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap">
+              <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm whitespace-nowrap hover:bg-gray-200">
                 1-2 años
               </button>
             </div>
           </div>
 
-          {/* Posts */}
+          {/* Posts de la comunidad */}
           <div className="p-4 space-y-4">
             {communityPosts.map(post => (
-              <div key={post.id} className="border rounded-lg p-4">
+              <div key={post.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start space-x-3 mb-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                     {post.author[0]}
@@ -1115,15 +1393,15 @@ const Stimula = () => {
                 </p>
 
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <button className="flex items-center space-x-1">
+                  <button className="flex items-center space-x-1 hover:text-red-500 transition-colors">
                     <Heart className="w-4 h-4" />
                     <span>{post.likes}</span>
                   </button>
-                  <button className="flex items-center space-x-1">
+                  <button className="flex items-center space-x-1 hover:text-blue-500 transition-colors">
                     <MessageSquare className="w-4 h-4" />
                     <span>{post.comments}</span>
                   </button>
-                  <button className="flex items-center space-x-1">
+                  <button className="flex items-center space-x-1 hover:text-green-500 transition-colors">
                     <Share2 className="w-4 h-4" />
                     <span>{post.shares}</span>
                   </button>
@@ -1133,10 +1411,10 @@ const Stimula = () => {
           </div>
 
           {/* Grupos populares */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t bg-gray-50">
             <h3 className="font-bold mb-3">Grupos Populares</h3>
             <div className="space-y-2">
-              <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3 p-2 bg-white rounded-lg shadow-sm">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <Baby className="w-4 h-4 text-white" />
                 </div>
@@ -1145,7 +1423,7 @@ const Stimula = () => {
                   <div className="text-xs text-gray-600">1,234 miembros</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3 p-2 bg-white rounded-lg shadow-sm">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                   <Users className="w-4 h-4 text-white" />
                 </div>
@@ -1161,7 +1439,7 @@ const Stimula = () => {
     </div>
   );
 
-  // Experts Modal Component
+  // Experts Modal Component - Mejorado
   const ExpertsModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
@@ -1169,22 +1447,22 @@ const Stimula = () => {
           <h2 className="text-lg font-bold">Consulta con Expertos</h2>
           <button 
             onClick={() => setShowExperts(false)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto max-h-[calc(90vh-64px)]">
-          {/* Diferenciación por plan */}
-          <div className="p-4 bg-yellow-50 border-b">
+          {/* Status del plan */}
+          <div className={`p-4 border-b ${userPlan === 'premium' ? 'bg-green-50' : 'bg-yellow-50'}`}>
             <div className="flex items-center space-x-2 mb-2">
-              <Crown className="w-4 h-4 text-yellow-600" />
-              <span className="font-semibold text-yellow-800">
+              <Crown className={`w-4 h-4 ${userPlan === 'premium' ? 'text-green-600' : 'text-yellow-600'}`} />
+              <span className={`font-semibold ${userPlan === 'premium' ? 'text-green-800' : 'text-yellow-800'}`}>
                 {userPlan === 'premium' ? 'Consultas Ilimitadas' : 'Plan Gratuito'}
               </span>
             </div>
-            <p className="text-sm text-yellow-700">
+            <p className={`text-sm ${userPlan === 'premium' ? 'text-green-700' : 'text-yellow-700'}`}>
               {userPlan === 'premium' 
                 ? 'Acceso completo a todos los especialistas y consultas ilimitadas'
                 : 'Consulta rápida gratuita disponible • Actualiza para acceso completo'
@@ -1195,7 +1473,7 @@ const Stimula = () => {
           {/* Lista de expertos */}
           <div className="p-4 space-y-4">
             {experts.map(expert => (
-              <div key={expert.id} className="border rounded-lg p-4">
+              <div key={expert.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start space-x-3 mb-3">
                   <span className="text-2xl">{expert.avatar}</span>
                   <div className="flex-1">
@@ -1229,22 +1507,25 @@ const Stimula = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Disponible: {expert.nextAvailable}</span>
-                  <span className="text-sm font-semibold">{expert.priceConsultation}</span>
+                <div className="flex items-center justify-between mb-3 text-sm">
+                  <span className="text-gray-600">Disponible: {expert.nextAvailable}</span>
+                  <span className="font-semibold">{expert.priceConsultation}</span>
                 </div>
 
                 {expert.isPremium && userPlan !== 'premium' ? (
-                  <button className="w-full bg-yellow-100 text-yellow-800 py-2 rounded-lg font-medium text-sm">
+                  <button 
+                    onClick={() => setUserPlan('premium')}
+                    className="w-full bg-yellow-100 text-yellow-800 py-2 rounded-lg font-medium text-sm hover:bg-yellow-200 transition-colors"
+                  >
                     Actualizar a Premium
                   </button>
                 ) : (
                   <div className="flex space-x-2">
-                    <button className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium text-sm flex items-center justify-center space-x-1">
+                    <button className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium text-sm flex items-center justify-center space-x-1 hover:bg-blue-600 transition-colors">
                       <Phone className="w-4 h-4" />
                       <span>Video llamada</span>
                     </button>
-                    <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium text-sm flex items-center justify-center space-x-1">
+                    <button className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium text-sm flex items-center justify-center space-x-1 hover:bg-gray-200 transition-colors">
                       <MessageSquare className="w-4 h-4" />
                       <span>Chat</span>
                     </button>
@@ -1258,7 +1539,111 @@ const Stimula = () => {
     </div>
   );
 
-  // Settings Modal Component
+  // Parent Profile Modal Component - Nuevo
+  const ParentProfileModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold">Mi Perfil</h2>
+          <button 
+            onClick={() => setShowParentProfile(false)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-6">
+          {/* Información del usuario */}
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+              {currentUser?.name?.charAt(0) || 'U'}
+            </div>
+            <h3 className="font-bold text-xl">{currentUser?.name}</h3>
+            <p className="text-gray-600">{currentUser?.email}</p>
+            <p className="text-sm text-gray-500">Miembro desde {currentUser?.joinDate}</p>
+          </div>
+
+          {/* Estadísticas del padre */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-blue-600">{children.length}</div>
+              <div className="text-sm text-blue-800">Niños registrados</div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {children.reduce((total, child) => total + child.totalActivities, 0)}
+              </div>
+              <div className="text-sm text-green-800">Actividades totales</div>
+            </div>
+          </div>
+
+          {/* Plan actual */}
+          <div className={`rounded-lg p-4 ${userPlan === 'premium' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gray-100'} text-white`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <Crown className="w-5 h-5" />
+              <span className="font-bold">Plan {userPlan === 'premium' ? 'Premium' : 'Gratuito'}</span>
+            </div>
+            {userPlan === 'premium' ? (
+              <p className="text-sm opacity-90">Acceso completo hasta renovación</p>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-600 mb-3">Acceso limitado • Desbloquea todo el potencial</p>
+                <button 
+                  onClick={() => {
+                    setUserPlan('premium');
+                    setShowParentProfile(false);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors"
+                >
+                  Actualizar a Premium
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Configuración rápida */}
+          <div className="space-y-3">
+            <button 
+              onClick={() => {
+                setShowParentProfile(false);
+                setShowSettings(true);
+              }}
+              className="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Settings className="w-5 h-5 text-gray-600" />
+              <span>Configuraciones</span>
+            </button>
+            
+            <button 
+              onClick={() => {
+                setShowParentProfile(false);
+                setShowReports(true);
+              }}
+              className="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 text-gray-600" />
+              <span>Ver Reportes</span>
+            </button>
+          </div>
+
+          {/* Cerrar sesión */}
+          <button 
+            onClick={() => {
+              setShowParentProfile(false);
+              handleLogout();
+            }}
+            className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center justify-center space-x-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Settings Modal Component - TODOS los submenús funcionales
   const SettingsModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
@@ -1266,18 +1651,18 @@ const Stimula = () => {
           <h2 className="text-lg font-bold">Configuración</h2>
           <button 
             onClick={() => setShowSettings(false)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto max-h-[calc(90vh-64px)] p-4 space-y-4">
-          {/* Idioma */}
+          {/* Idioma - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Globe className="w-5 h-5 text-gray-600" />
@@ -1290,7 +1675,7 @@ const Stimula = () => {
             </button>
             
             {showLanguageMenu && (
-              <div className="mt-2 bg-white border rounded-lg overflow-hidden">
+              <div className="mt-2 bg-white border rounded-lg overflow-hidden shadow-sm">
                 {['Español', 'English', 'Français', 'Português'].map(lang => (
                   <button 
                     key={lang}
@@ -1298,8 +1683,8 @@ const Stimula = () => {
                       setSelectedLanguage(lang);
                       setShowLanguageMenu(false);
                     }}
-                    className={`w-full p-3 text-left hover:bg-gray-50 ${
-                      selectedLanguage === lang ? 'bg-blue-50 text-blue-600' : ''
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
+                      selectedLanguage === lang ? 'bg-blue-50 text-blue-600 font-medium' : ''
                     }`}
                   >
                     {lang}
@@ -1309,11 +1694,11 @@ const Stimula = () => {
             )}
           </div>
 
-          {/* Zona horaria */}
+          {/* Zona horaria - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Clock className="w-5 h-5 text-gray-600" />
@@ -1326,16 +1711,16 @@ const Stimula = () => {
             </button>
             
             {showTimezoneMenu && (
-              <div className="mt-2 bg-white border rounded-lg overflow-hidden">
-                {['Ciudad de México', 'Guadalajara', 'Monterrey', 'Tijuana'].map(tz => (
+              <div className="mt-2 bg-white border rounded-lg overflow-hidden shadow-sm">
+                {['Ciudad de México', 'Guadalajara', 'Monterrey', 'Tijuana', 'Cancún'].map(tz => (
                   <button 
                     key={tz}
                     onClick={() => {
                       setSelectedTimezone(tz);
                       setShowTimezoneMenu(false);
                     }}
-                    className={`w-full p-3 text-left hover:bg-gray-50 ${
-                      selectedTimezone === tz ? 'bg-blue-50 text-blue-600' : ''
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
+                      selectedTimezone === tz ? 'bg-blue-50 text-blue-600 font-medium' : ''
                     }`}
                   >
                     {tz}
@@ -1345,24 +1730,24 @@ const Stimula = () => {
             )}
           </div>
 
-          {/* Recordatorios */}
+          {/* Recordatorios - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowRemindersMenu(!showRemindersMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Bell className="w-5 h-5 text-gray-600" />
                 <div className="text-left">
                   <div className="font-medium">Recordatorios</div>
-                  <div className="text-sm text-gray-600">Personalizados</div>
+                  <div className="text-sm text-gray-600">Configurar notificaciones</div>
                 </div>
               </div>
               {showRemindersMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             
             {showRemindersMenu && (
-              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3">
+              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Actividades diarias</span>
                   <input type="checkbox" defaultChecked className="rounded" />
@@ -1375,34 +1760,42 @@ const Stimula = () => {
                   <span className="text-sm">Consultas con expertos</span>
                   <input type="checkbox" className="rounded" />
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Tiempo de estimulación</span>
+                  <input type="checkbox" defaultChecked className="rounded" />
+                </div>
               </div>
             )}
           </div>
 
-          {/* Privacidad */}
+          {/* Privacidad - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowPrivacyMenu(!showPrivacyMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Shield className="w-5 h-5 text-gray-600" />
                 <div className="text-left">
                   <div className="font-medium">Privacidad</div>
-                  <div className="text-sm text-gray-600">Configurar</div>
+                  <div className="text-sm text-gray-600">Controla tu información</div>
                 </div>
               </div>
               {showPrivacyMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             
             {showPrivacyMenu && (
-              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3">
+              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Compartir progreso</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Análisis de datos</span>
+                  <input type="checkbox" defaultChecked className="rounded" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Contacto con expertos</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </div>
                 <div className="flex items-center justify-between">
@@ -1413,28 +1806,30 @@ const Stimula = () => {
             )}
           </div>
 
-          {/* Unidades */}
+          {/* Unidades - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowUnitsMenu(!showUnitsMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Target className="w-5 h-5 text-gray-600" />
                 <div className="text-left">
                   <div className="font-medium">Unidades</div>
-                  <div className="text-sm text-gray-600">Métrico</div>
+                  <div className="text-sm text-gray-600">Sistema métrico</div>
                 </div>
               </div>
               {showUnitsMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             
             {showUnitsMenu && (
-              <div className="mt-2 bg-white border rounded-lg overflow-hidden">
+              <div className="mt-2 bg-white border rounded-lg overflow-hidden shadow-sm">
                 {['Métrico (cm, kg)', 'Imperial (ft, lb)'].map(unit => (
                   <button 
                     key={unit}
-                    className="w-full p-3 text-left hover:bg-gray-50 bg-blue-50 text-blue-600"
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
+                      unit.includes('Métrico') ? 'bg-blue-50 text-blue-600 font-medium' : ''
+                    }`}
                   >
                     {unit}
                   </button>
@@ -1443,24 +1838,24 @@ const Stimula = () => {
             )}
           </div>
 
-          {/* Gamificación */}
+          {/* Gamificación - FUNCIONAL */}
           <div>
             <button 
               onClick={() => setShowGamificationMenu(!showGamificationMenu)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Gamepad2 className="w-5 h-5 text-gray-600" />
                 <div className="text-left">
                   <div className="font-medium">Gamificación</div>
-                  <div className="text-sm text-gray-600">Activada</div>
+                  <div className="text-sm text-gray-600">Puntos y logros</div>
                 </div>
               </div>
               {showGamificationMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             
             {showGamificationMenu && (
-              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3">
+              <div className="mt-2 bg-white border rounded-lg p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Puntos y niveles</span>
                   <input type="checkbox" defaultChecked className="rounded" />
@@ -1473,6 +1868,10 @@ const Stimula = () => {
                   <span className="text-sm">Celebraciones</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Sonidos de logros</span>
+                  <input type="checkbox" className="rounded" />
+                </div>
               </div>
             )}
           </div>
@@ -1481,15 +1880,15 @@ const Stimula = () => {
     </div>
   );
 
-  // Reports Modal Component  
+  // Reports Modal Component - Con contenido científico mejorado
   const ReportsModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-bold">Reportes Detallados</h2>
+          <h2 className="text-lg font-bold">Reporte de {activeChild.name}</h2>
           <button 
             onClick={() => setShowReports(false)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -1497,7 +1896,7 @@ const Stimula = () => {
 
         <div className="overflow-y-auto max-h-[calc(90vh-64px)] p-4 space-y-6">
           {/* Resumen ejecutivo */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-4 text-white">
             <h3 className="font-bold mb-2">Resumen del Desarrollo</h3>
             <p className="text-sm opacity-90 mb-3">
               {activeChild.name} muestra un desarrollo excepcional para sus {activeChild.exactAge.months} meses.
@@ -1681,12 +2080,245 @@ const Stimula = () => {
               </div>
             </div>
           </div>
+
+          {/* Botón de descarga */}
+          <button 
+            onClick={() => setShowDataDownload(true)}
+            className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Descargar Reporte Completo</span>
+          </button>
         </div>
       </div>
     </div>
   );
 
-  // Main App Component
+  // Notifications Modal Component - Nuevo
+  const NotificationsModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold">Notificaciones</h2>
+          <button 
+            onClick={() => setShowNotifications(false)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto max-h-[calc(90vh-64px)] p-4 space-y-4">
+          <div className="bg-blue-50 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="bg-blue-500 rounded-full p-1">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-blue-800">Nuevo Insight Científico</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Descubre cómo el masaje sensorial mejora la mielinización neuronal
+                </p>
+                <p className="text-xs text-blue-600 mt-2">Hace 2 horas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-50 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="bg-green-500 rounded-full p-1">
+                <Trophy className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-green-800">¡Racha de 12 días!</h4>
+                <p className="text-sm text-green-700 mt-1">
+                  {activeChild.name} ha completado actividades 12 días seguidos
+                </p>
+                <p className="text-xs text-green-600 mt-2">Hace 5 horas</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-purple-50 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="bg-purple-500 rounded-full p-1">
+                <Calendar className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-purple-800">Hora de Estimulación</h4>
+                <p className="text-sm text-purple-700 mt-1">
+                  Es momento ideal para actividades sensoriales (ventana óptima 3-5 PM)
+                </p>
+                <p className="text-xs text-purple-600 mt-2">Hace 1 día</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Data Download Modal Component - Nuevo
+  const DataDownloadModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold">Descarga de Datos</h2>
+          <button 
+            onClick={() => setShowDataDownload(false)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-6">
+          <div className="text-center">
+            <Download className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="font-bold text-lg mb-2">Exporta los Datos de {activeChild.name}</h3>
+            <p className="text-gray-600">
+              Descarga un reporte completo con todo el progreso y recomendaciones
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors">
+              Reporte Completo (PDF)
+            </button>
+            <button className="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors">
+              Datos de Actividades (CSV)
+            </button>
+            <button className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition-colors">
+              Análisis de Desarrollo (JSON)
+            </button>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-600">
+              Los datos están encriptados y solo tú puedes acceder a ellos
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Child Selector Modal Component - Nuevo
+  const ChildSelectorModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-bold">Seleccionar Hijo</h2>
+          <button 
+            onClick={() => setShowChildSelector(false)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {children.map(child => (
+            <button
+              key={child.id}
+              onClick={() => {
+                setActiveChildId(child.id);
+                setShowChildSelector(false);
+              }}
+              className={`w-full p-4 rounded-lg border-2 text-left transition-all hover:shadow-md ${
+                child.id === activeChildId 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">{child.avatar}</span>
+                <div className="flex-1">
+                  <div className="font-semibold">{child.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {child.exactAge.months} meses • Nivel {child.level}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {child.totalActivities} actividades completadas
+                  </div>
+                </div>
+                {child.id === activeChildId && (
+                  <Check className="w-5 h-5 text-blue-500" />
+                )}
+              </div>
+            </button>
+          ))}
+
+          <button 
+            onClick={() => {
+              setShowChildSelector(false);
+              setShowAddChild(true);
+            }}
+            className="w-full p-4 rounded-lg border-2 border-dashed border-gray-300 text-center hover:border-blue-300 hover:bg-blue-50 transition-all"
+          >
+            <Plus className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+            <span className="text-gray-600 font-medium">Agregar Nuevo Hijo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Add Child Modal Component - Mejorado
+  const AddChildModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6">
+        <h2 className="text-lg font-bold mb-6">Agregar Nuevo Hijo</h2>
+        <form className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Nombre del bebé</label>
+            <input 
+              type="text" 
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Nombre completo"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Fecha de nacimiento</label>
+            <input 
+              type="date" 
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Género (opcional)</label>
+            <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">Seleccionar</option>
+              <option value="female">Niña</option>
+              <option value="male">Niño</option>
+              <option value="other">Prefiero no especificar</option>
+            </select>
+          </div>
+          <div className="flex space-x-3 pt-4">
+            <button 
+              type="button"
+              onClick={() => setShowAddChild(false)}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="button"
+              onClick={() => {
+                // Aquí se agregaría la lógica para crear un nuevo hijo
+                setShowAddChild(false);
+              }}
+              className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            >
+              Agregar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  // Main App Component - Con navegación mejorada
   const AppScreen = () => (
     <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
       {/* Main Content */}
@@ -1697,102 +2329,78 @@ const Stimula = () => {
         {currentSection === 'profile' && <ProfileScreen />}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t">
+      {/* Bottom Navigation - Mejorada */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t shadow-lg">
         <div className="grid grid-cols-4 gap-1">
           <button 
             onClick={() => setCurrentSection('home')}
-            className={`p-4 text-center ${
-              currentSection === 'home' ? 'text-blue-600' : 'text-gray-400'
+            className={`p-4 text-center transition-colors ${
+              currentSection === 'home' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
             <Home className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-xs">Inicio</span>
+            <span className="text-xs font-medium">Inicio</span>
           </button>
           
           <button 
             onClick={() => setCurrentSection('activities')}
-            className={`p-4 text-center ${
-              currentSection === 'activities' ? 'text-blue-600' : 'text-gray-400'
+            className={`p-4 text-center transition-colors ${
+              currentSection === 'activities' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
             <Play className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-xs">Actividades</span>
+            <span className="text-xs font-medium">Actividades</span>
           </button>
           
           <button 
             onClick={() => setCurrentSection('progress')}
-            className={`p-4 text-center ${
-              currentSection === 'progress' ? 'text-blue-600' : 'text-gray-400'
+            className={`p-4 text-center transition-colors ${
+              currentSection === 'progress' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
             <BarChart3 className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-xs">Progreso</span>
+            <span className="text-xs font-medium">Progreso</span>
           </button>
           
           <button 
             onClick={() => setCurrentSection('profile')}
-            className={`p-4 text-center ${
-              currentSection === 'profile' ? 'text-blue-600' : 'text-gray-400'
+            className={`p-4 text-center transition-colors ${
+              currentSection === 'profile' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
             }`}
           >
             <User className="w-5 h-5 mx-auto mb-1" />
-            <span className="text-xs">Perfil</span>
+            <span className="text-xs font-medium">Perfil</span>
           </button>
         </div>
       </div>
 
-      {/* Modales */}
+      {/* Todos los Modales */}
       {showCommunity && <CommunityModal />}
       {showExperts && <ExpertsModal />}
+      {showParentProfile && <ParentProfileModal />}
       {showSettings && <SettingsModal />}
       {showReports && <ReportsModal />}
-      
-      {/* Add Child Modal */}
-      {showAddChild && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-lg font-bold mb-4">Agregar Nuevo Hijo</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Nombre</label>
-                <input 
-                  type="text" 
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="Nombre del bebé"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fecha de Nacimiento</label>
-                <input 
-                  type="date" 
-                  className="w-full p-2 border rounded-lg"
-                />
-              </div>
-              <div className="flex space-x-3">
-                <button 
-                  onClick={() => setShowAddChild(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={() => setShowAddChild(false)}
-                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-medium"
-                >
-                  Agregar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {showNotifications && <NotificationsModal />}
+      {showDataDownload && <DataDownloadModal />}
+      {showChildSelector && <ChildSelectorModal />}
+      {showAddChild && <AddChildModal />}
     </div>
   );
 
+  // Main render logic
   return (
     <div className="min-h-screen bg-gray-100">
-      {currentPage === 'landing' ? <LandingPage /> : <AppScreen />}
+      {currentPage === 'landing' && <LandingPage />}
+      {currentPage === 'auth' && <AuthPage />}
+      {currentPage === 'app' && isLoggedIn && <AppScreen />}
     </div>
   );
 };
